@@ -1,0 +1,213 @@
+.wrap { padding: 24px; }
+
+/* Header */
+.header {
+  display: flex; align-items: center; gap: 12px;
+  margin-bottom: 16px;
+}
+.searchWrap {
+  flex: 1; position: relative;
+  display: flex; align-items: center;
+}
+.searchWrap svg {
+  position: absolute; left: 10px;
+  color: var(--text3); pointer-events: none;
+}
+.searchWrap input {
+  padding-left: 32px;
+}
+
+/* Table */
+.table {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.tableHead {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1.5fr 1.5fr 80px;
+  padding: 10px 16px;
+  font-size: 11px; font-weight: 600; color: var(--text3);
+  letter-spacing: .05em; text-transform: uppercase;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg3);
+}
+.tableRow {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1.5fr 1.5fr 80px;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  transition: background .1s;
+}
+.tableRow:last-child { border-bottom: none; }
+.tableRow:hover { background: var(--bg3); }
+
+.clienteCell { display: flex; align-items: center; gap: 10px; }
+.avatar {
+  width: 34px; height: 34px; border-radius: 50%;
+  background: var(--accent-bg); color: var(--accent);
+  font-size: 12px; font-weight: 600;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.nombre { font-size: 13px; font-weight: 500; color: var(--text); }
+.alias  { font-size: 11px; color: var(--text3); }
+.cell   { font-size: 12px; color: var(--text2); }
+
+.actions { display: flex; gap: 4px; justify-content: flex-end; }
+.iconBtn {
+  background: none; border: none;
+  color: var(--text3); padding: 5px;
+  border-radius: 4px; display: flex;
+  transition: color .12s, background .12s;
+}
+.iconBtn:hover { color: var(--accent); background: var(--bg3); }
+.iconBtn.danger:hover { color: var(--danger); }
+
+.empty {
+  text-align: center; padding: 48px;
+  font-size: 13px; color: var(--text3);
+}
+.count {
+  font-size: 12px; color: var(--text3);
+  margin-top: 10px; padding-left: 2px;
+}
+
+/* Modal base */
+.overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.6);
+  z-index: 100;
+  display: flex; align-items: center; justify-content: center;
+  padding: 16px;
+}
+.modal {
+  background: var(--bg2);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius);
+  width: 100%; max-width: 520px;
+  box-shadow: var(--shadow);
+  max-height: 90vh;
+  display: flex; flex-direction: column;
+}
+.modalHeader {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  font-size: 14px; font-weight: 500; color: var(--text);
+  flex-shrink: 0;
+}
+.closeBtn {
+  background: none; border: none;
+  color: var(--text3); display: flex; padding: 2px;
+  border-radius: 4px; transition: color .12s;
+}
+.closeBtn:hover { color: var(--text); }
+
+.modalBody {
+  padding: 20px; overflow-y: auto; flex: 1;
+}
+.formGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 12px;
+}
+.modalFooter {
+  display: flex; align-items: center; gap: 8px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+  margin-top: 4px;
+}
+
+/* Ver detalle */
+.clienteInfo {
+  display: flex; align-items: center; gap: 14px;
+  margin-bottom: 16px;
+}
+.avatarLg {
+  width: 52px; height: 52px; border-radius: 50%;
+  background: var(--accent-bg); color: var(--accent);
+  font-size: 18px; font-weight: 600;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.nombreLg { font-size: 17px; font-weight: 600; color: var(--text); }
+.aliasLg  { font-size: 12px; color: var(--text3); }
+
+.infoGrid {
+  display: flex; flex-direction: column; gap: 7px;
+  margin-bottom: 20px;
+  background: var(--bg3);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+}
+.infoItem {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 12px; color: var(--text2);
+}
+.infoItem svg { color: var(--text3); flex-shrink: 0; }
+
+.histTitle {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 12px; font-weight: 500; color: var(--text);
+  margin-bottom: 12px;
+}
+.histSummary {
+  display: grid; grid-template-columns: repeat(3,1fr);
+  gap: 8px; margin-bottom: 14px;
+}
+.histStat {
+  background: var(--bg3);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px; text-align: center;
+}
+.histStat span { display: block; font-size: 15px; font-weight: 600; color: var(--text); font-family: var(--mono); }
+.histStat label { font-size: 10px; color: var(--text3); margin-top: 2px; display: block; font-weight: 400; }
+
+.histRow {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--border);
+}
+.histRow:last-child { border-bottom: none; }
+.histId    { font-size: 13px; font-weight: 500; color: var(--text); }
+.histFecha { font-size: 11px; color: var(--text3); }
+.histMonto { font-size: 13px; font-weight: 500; color: var(--text); font-family: var(--mono); margin-bottom: 3px; }
+
+/* Confirm */
+.confirmModal {
+  background: var(--bg2);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius);
+  padding: 32px 28px;
+  max-width: 360px; width: 100%;
+  text-align: center;
+  box-shadow: var(--shadow);
+}
+.confirmIcon {
+  width: 48px; height: 48px; border-radius: 50%;
+  background: var(--danger-bg); color: var(--danger);
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 16px;
+}
+.confirmTitle { font-size: 16px; font-weight: 600; color: var(--text); margin-bottom: 8px; }
+.confirmSub   { font-size: 13px; color: var(--text2); margin-bottom: 24px; line-height: 1.6; }
+.confirmBtns  { display: flex; gap: 8px; justify-content: center; }
+
+/* Responsive */
+@media (max-width: 768px) {
+  .wrap { padding: 16px; }
+  .tableHead { display: none; }
+  .tableRow {
+    grid-template-columns: 1fr auto;
+    grid-template-rows: auto auto;
+    gap: 4px;
+  }
+  .tableRow .cell:not(:first-child) { display: none; }
+  .clienteCell { grid-row: 1; }
+  .actions { grid-row: 1; grid-column: 2; }
+  .formGrid { grid-template-columns: 1fr; }
+}

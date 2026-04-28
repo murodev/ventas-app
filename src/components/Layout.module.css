@@ -1,0 +1,161 @@
+.app {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+/* ─── Sidebar ─── */
+.sidebarWrap {
+  flex-shrink: 0;
+  width: 220px;
+  display: flex;
+}
+.sidebar {
+  width: 220px;
+  background: var(--bg2);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  padding: 20px 0 0;
+  overflow-y: auto;
+}
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 16px 20px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 8px;
+}
+.logoIcon {
+  width: 34px; height: 34px;
+  background: var(--accent);
+  border-radius: 9px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.logoName { font-size: 13px; font-weight: 600; color: var(--text); }
+.logoSub  { font-size: 11px; color: var(--text3); }
+
+.nav { flex: 1; padding: 4px 0; }
+
+.sectionLabel {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .07em;
+  color: var(--text3);
+  padding: 14px 18px 5px;
+  text-transform: uppercase;
+}
+
+.navItem {
+  display: flex; align-items: center; gap: 9px;
+  padding: 8px 18px;
+  font-size: 13px;
+  color: var(--text2);
+  cursor: pointer;
+  border-left: 2px solid transparent;
+  transition: all .12s;
+  user-select: none;
+}
+.navItem:hover { background: var(--bg3); color: var(--text); }
+.navItem.active {
+  background: var(--accent-bg);
+  color: var(--accent);
+  border-left-color: var(--accent);
+  font-weight: 500;
+}
+
+.userArea {
+  display: flex; align-items: center; gap: 9px;
+  padding: 14px 14px 20px;
+  border-top: 1px solid var(--border);
+  margin-top: 8px;
+}
+.avatar {
+  width: 30px; height: 30px; border-radius: 50%;
+  background: var(--accent-bg);
+  color: var(--accent);
+  font-size: 11px; font-weight: 600;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.userName { font-size: 12px; font-weight: 500; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.userRole { font-size: 11px; color: var(--text3); }
+.logoutBtn {
+  background: none; border: none;
+  color: var(--text3);
+  padding: 4px;
+  border-radius: 4px;
+  display: flex;
+  transition: color .12s;
+}
+.logoutBtn:hover { color: var(--danger); }
+
+/* ─── Mobile sidebar ─── */
+.sidebarMobile {
+  display: none;
+  position: fixed;
+  left: -240px;
+  top: 0; bottom: 0;
+  width: 240px;
+  z-index: 200;
+  transition: left .22s ease;
+  box-shadow: var(--shadow);
+}
+.sidebarMobile .sidebar { width: 240px; }
+.sidebarMobile.open { left: 0; }
+
+.overlay {
+  display: none;
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.55);
+  z-index: 199;
+}
+
+/* ─── Main ─── */
+.main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-width: 0;
+}
+
+.topbar {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 24px;
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.hamburger {
+  display: none;
+  background: none; border: none;
+  color: var(--text2);
+  padding: 4px;
+}
+
+.pageTitle {
+  flex: 1;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0;
+}
+
+/* ─── Responsive ─── */
+@media (max-width: 768px) {
+  .sidebarWrap { display: none; }
+  .sidebarMobile { display: flex; }
+  .overlay { display: block; }
+  .hamburger { display: flex; }
+  .topbar { padding: 10px 16px; }
+}

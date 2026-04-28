@@ -1,0 +1,121 @@
+.wrap    { padding: 24px; }
+.loading { padding: 48px; text-align: center; color: var(--text2); }
+.empty   { padding: 48px; text-align: center; font-size: 13px; color: var(--text3); }
+
+/* Tabs */
+.tabs {
+  display: flex; gap: 4px; margin-bottom: 20px;
+  border-bottom: 1px solid var(--border); padding-bottom: 0;
+  flex-wrap: wrap;
+}
+.tab {
+  display: flex; align-items: center; gap: 7px;
+  padding: 9px 16px; font-size: 13px; font-weight: 500;
+  color: var(--text2); background: transparent; border: none;
+  border-bottom: 2px solid transparent; cursor: pointer;
+  transition: color .12s, border-color .12s;
+  font-family: var(--font); margin-bottom: -1px;
+}
+.tab:hover { color: var(--text); }
+.tabActive { color: var(--accent); border-bottom-color: var(--accent); }
+
+/* Período */
+.periodoRow {
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 16px;
+}
+.filtros { display: flex; gap: 4px; flex: 1; flex-wrap: wrap; }
+.filtroBtn {
+  font-size: 12px; padding: 6px 12px;
+  border: 1px solid var(--border); border-radius: var(--radius-sm);
+  background: transparent; color: var(--text2); cursor: pointer; transition: all .12s;
+}
+.filtroBtn:hover { background: var(--bg3); }
+.filtroBtn.active { background: var(--accent-bg); color: var(--accent); border-color: var(--accent); }
+.refreshBtn { padding: 6px 10px; }
+
+/* Métricas */
+.metrics {
+  display: grid; grid-template-columns: repeat(4, minmax(0,1fr));
+  gap: 12px; margin-bottom: 16px;
+}
+.metric {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 14px 18px;
+}
+.metricVal   { font-size: 20px; font-weight: 600; color: var(--text); font-family: var(--mono); }
+.metricLabel { font-size: 11px; color: var(--text3); margin-top: 4px; }
+
+/* Charts */
+.chartCard {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 18px 20px;
+  margin-bottom: 14px;
+}
+.chartTitle {
+  font-size: 13px; font-weight: 500; color: var(--text);
+  margin-bottom: 16px;
+}
+
+/* Tables */
+.tableCard {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: var(--radius); overflow: hidden; margin-bottom: 14px;
+}
+.tableTitle {
+  font-size: 13px; font-weight: 500; color: var(--text);
+  padding: 14px 16px; border-bottom: 1px solid var(--border);
+}
+.table { overflow-x: auto; }
+.tableHead {
+  display: grid; padding: 9px 16px;
+  font-size: 11px; font-weight: 600; color: var(--text3);
+  letter-spacing: .05em; text-transform: uppercase;
+  border-bottom: 1px solid var(--border); background: var(--bg3);
+}
+.tableRow {
+  display: grid; align-items: center;
+  padding: 11px 16px; border-bottom: 1px solid var(--border);
+  transition: background .1s;
+}
+.tableRow:last-child { border-bottom: none; }
+.tableRow:hover { background: var(--bg3); }
+
+.idCell    { font-size: 12px; color: var(--text3); font-family: var(--mono); }
+.nameCell  { font-size: 13px; font-weight: 500; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cell      { font-size: 12px; color: var(--text2); }
+.montoCell { font-size: 13px; font-weight: 500; color: var(--text); font-family: var(--mono); }
+
+/* Cobros por cliente */
+.cobroCliente {
+  border-bottom: 1px solid var(--border);
+}
+.cobroCliente:last-child { border-bottom: none; }
+.cobroClienteHeader {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 12px 16px;
+  background: var(--bg3);
+}
+.cobroNombre { font-size: 13px; font-weight: 600; color: var(--text); }
+.cobroTel    { font-size: 11px; color: var(--text3); margin-top: 2px; }
+.cobroTotal  { font-size: 16px; font-weight: 700; color: var(--danger); font-family: var(--mono); }
+.cobroVentaRow {
+  display: grid;
+  grid-template-columns: 50px 100px 110px 130px 90px;
+  align-items: center; padding: 9px 16px 9px 28px;
+  border-top: 1px solid var(--border);
+  font-size: 12px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .wrap     { padding: 16px; }
+  .metrics  { grid-template-columns: repeat(2,1fr); }
+  .tableHead{ display: none; }
+  .tableRow { grid-template-columns: 1fr auto !important; gap: 4px; }
+  .cobroVentaRow { grid-template-columns: 1fr auto; }
+  .cell, .idCell { display: none; }
+}
+@media (max-width: 480px) {
+  .tab { font-size: 12px; padding: 8px 10px; }
+}

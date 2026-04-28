@@ -1,0 +1,79 @@
+.wrap { padding: 24px; }
+.loading { padding: 40px; color: var(--text2); text-align: center; }
+
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0,1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.metricCard {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px 18px;
+}
+.metricLabel { font-size: 11px; color: var(--text2); margin-bottom: 8px; }
+.metricVal   { font-size: 22px; font-weight: 600; color: var(--text); font-family: var(--mono); }
+.metricDelta { font-size: 11px; margin-top: 4px; }
+
+.grid2 {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0,1fr));
+  gap: 12px;
+}
+
+.cardHeader {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 14px;
+}
+.cardTitle { font-size: 13px; font-weight: 500; color: var(--text); }
+
+.ventaRow {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--border);
+}
+.ventaRow:last-child { border-bottom: none; }
+.ventaCliente { font-size: 13px; font-weight: 500; color: var(--text); }
+.ventaFecha   { font-size: 11px; color: var(--text3); }
+.ventaMonto   { font-size: 13px; font-weight: 500; color: var(--text); font-family: var(--mono); }
+
+.stockRow {
+  display: flex; align-items: center; gap: 8px;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--border);
+}
+.stockRow:last-child { border-bottom: none; }
+.stockName    { flex: 1; font-size: 12px; color: var(--text); }
+.stockLote    { font-size: 11px; color: var(--text3); min-width: 52px; font-family: var(--mono); }
+.stockBarWrap { width: 64px; height: 4px; background: var(--border2); border-radius: 2px; }
+.stockBar     { height: 4px; border-radius: 2px; transition: width .3s; }
+.stockQty     { font-size: 11px; color: var(--text2); min-width: 36px; text-align: right; font-family: var(--mono); }
+
+.cobrosGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0,1fr));
+  gap: 0;
+}
+.cobroItem {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 10px 12px 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+.cobroItem:nth-child(even) { padding-left: 16px; border-left: 1px solid var(--border); }
+.cobroItem:nth-last-child(-n+2) { border-bottom: none; }
+
+@media (max-width: 900px) {
+  .metrics { grid-template-columns: repeat(2, minmax(0,1fr)); }
+  .grid2   { grid-template-columns: 1fr; }
+  .cobrosGrid { grid-template-columns: 1fr; }
+  .cobroItem:nth-child(even) { padding-left: 0; border-left: none; }
+  .cobroItem:last-child { border-bottom: none; }
+}
+
+@media (max-width: 480px) {
+  .wrap { padding: 16px; }
+  .metrics { grid-template-columns: repeat(2, minmax(0,1fr)); gap: 8px; }
+  .metricVal { font-size: 18px; }
+}
