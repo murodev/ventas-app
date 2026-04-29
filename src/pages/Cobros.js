@@ -35,7 +35,7 @@ export default function Cobros() {
   const [error,       setError]       = useState('')
   const [entregado,   setEntregado]   = useState(false)
 
-  const cargar = async () => {
+  const cargar = async (actualizarSelected = false) => {
     setLoading(true)
     const [{ data: v }, { data: m }] = await Promise.all([
       supabase
@@ -44,8 +44,17 @@ export default function Cobros() {
         .order('fecha', { ascending: false }),
       supabase.from('mediospagos').select('idmediopago, mediopago'),
     ])
-    setVentas(v || [])
+    const ventasData = v || []
+    setVentas(ventasData)
     setMediosPago(m || [])
+    // Si hay un modal abierto, sincronizar selected con los datos frescos
+    if (actualizarSelected) {
+      setSelected(prev => {
+        if (!prev) return prev
+        const fresco = ventasData.find(x => x.idventa === prev.idventa)
+        return fresco ? { ...prev, ...fresco } : prev
+      })
+    }
     setLoading(false)
   }
 
@@ -125,7 +134,7 @@ export default function Cobros() {
         .eq('idventa', selected.idventa)
       if (errVenta) throw errVenta
 
-      // Refrescar modal inmediatamente con nuevos valores
+      // Actualizar modal inmediatamente
       setSelected(prev => ({
         ...prev,
         montopendiente: nuevoPendiente,
@@ -139,7 +148,8 @@ export default function Cobros() {
         mediospagos: { mediopago: mediosPago.find(m => m.idmediopago === Number(nuevoPago.idmediopago))?.mediopago || '' }
       }, ...prev])
       setNuevoPago({ monto: '', idmediopago: '' })
-      await cargar()
+      // Recargar tabla y sincronizar selected con datos de Supabase
+      await cargar(true)
 
       if (nuevoEstado === 'Pagado') setModal(null)
     } catch (e) {
