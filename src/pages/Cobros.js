@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
+import { generarRemito } from '../lib/remito'
 import styles from './Cobros.module.css'
 
 const Icon = ({ d, size = 16 }) => (
@@ -17,6 +18,7 @@ const ICONS = {
   plus:    'M12 5v14M5 12h14',
   history: 'M12 8v4l3 3M3.05 11a9 9 0 109.9-8.95',
   truck:   'M1 3h15v13H1zM16 8h4l3 3v5h-7V8zM5.5 19a1.5 1.5 0 100-3 1.5 1.5 0 000 3zM18.5 19a1.5 1.5 0 100-3 1.5 1.5 0 000 3z',
+  pdf:     'M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8zM14 2v6h6M9 13h6M9 17h4',
 }
 
 export default function Cobros() {
@@ -170,6 +172,36 @@ export default function Cobros() {
     await cargar()
   }
 
+  const imprimirRemito = async (v) => {
+    // Si venimos de la tabla, buscar detalle y pagos
+    let det = detalle
+    let pag = pagosHist
+    if (!det.length || (selected?.idventa !== v.idventa)) {
+      const [{ data: d }, { data: p }] = await Promise.all([
+        supabase.from('detalleventas')
+          .select('idproducto, cantidad, precio, lote, subtotal, productos(producto)')
+          .eq('idventa', v.idventa),
+        supabase.from('pagos')
+          .select('idpago, monto, fechapago, mediospagos(mediopago)')
+          .eq('idventa', v.idventa)
+          .order('fechapago'),
+      ])
+      det = d || []
+      pag = p || []
+    }
+    // Traer datos completos del cliente si faltan
+    let ventaCompleta = v
+    if (!v.clientes?.direccion) {
+      const { data: cli } = await supabase
+        .from('clientes')
+        .select('nombre, alias, telefono, direccion, email')
+        .eq('idcliente', v.idcliente)
+        .single()
+      if (cli) ventaCompleta = { ...v, clientes: { ...v.clientes, ...cli } }
+    }
+    generarRemito(ventaCompleta, det, pag)
+  }
+
   const fmt      = (n) => '$' + Number(n || 0).toLocaleString('es-AR', { minimumFractionDigits: 0 })
   const fmtFecha = (s) => s ? new Date(s).toLocaleDateString('es-AR', { day:'2-digit', month:'short', year:'numeric' }) : '—'
   const fmtHora  = (s) => s ? new Date(s).toLocaleTimeString('es-AR', { hour:'2-digit', minute:'2-digit' }) : ''
@@ -254,6 +286,10 @@ export default function Cobros() {
                     onClick={() => abrirModal(v)}
                     disabled={v.estado === 'Pagado'}>
                     {v.estado === 'Pagado' ? 'Cobrado' : <><Icon d={ICONS.money} size={13} /> Cobrar</>}
+                  </button>
+                  <button className={`btn btn-ghost ${styles.pdfBtn}`}
+                    onClick={() => imprimirRemito(v)} title="Generar remito PDF">
+                    <Icon d={ICONS.pdf} size={14} />
                   </button>
                 </div>
               ))}
@@ -386,6 +422,12 @@ export default function Cobros() {
                   <Icon d={ICONS.check} size={18} /> Venta cobrada al 100%
                 </div>
               )}
+
+              {/* Botón PDF siempre visible en el modal */}
+              <button className={`btn btn-ghost ${styles.pdfModalBtn}`}
+                onClick={() => imprimirRemito(selected)}>
+                <Icon d={ICONS.pdf} size={14} /> Generar remito PDF
+              </button>
             </div>
           </div>
         </div>
