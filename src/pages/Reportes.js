@@ -89,7 +89,7 @@ function LineChart({ data, labelKey, valueKey, fmt }) {
 
 export default function Reportes() {
   const [tab,       setTab]       = useState('ventas')
-  const [periodo,   setPeriodo]   = useState('mes')   // dia | semana | mes
+  const [periodo,   setPeriodo]   = useState('mes_actual')
   const [loading,   setLoading]   = useState(false)
 
   // Datos
@@ -105,9 +105,13 @@ export default function Reportes() {
   const getRango = useCallback(() => {
     const hoy   = new Date()
     const desde = new Date()
-    if (periodo === 'dia')    desde.setDate(hoy.getDate() - 1)
-    if (periodo === 'semana') desde.setDate(hoy.getDate() - 7)
-    if (periodo === 'mes')    desde.setDate(hoy.getDate() - 30)
+    if (periodo === 'dia')        desde.setDate(hoy.getDate() - 1)
+    if (periodo === 'semana')     desde.setDate(hoy.getDate() - 7)
+    if (periodo === 'mes')        desde.setDate(hoy.getDate() - 30)
+    if (periodo === 'mes_actual') {
+      desde.setDate(1)
+      desde.setHours(0, 0, 0, 0)
+    }
     return { desde: desde.toISOString(), hasta: hoy.toISOString() }
   }, [periodo])
 
@@ -205,7 +209,7 @@ export default function Reportes() {
           {/* Selector período */}
           <div className={styles.periodoRow}>
             <div className={styles.filtros}>
-              {[['dia','Ayer'],['semana','Últimos 7 días'],['mes','Últimos 30 días']].map(([p, label]) => (
+              {[['mes_actual','Mes actual'],['dia','Ayer'],['semana','Últimos 7 días'],['mes','Últimos 30 días']].map(([p, label]) => (
                 <button key={p} className={`${styles.filtroBtn} ${periodo === p ? styles.active : ''}`}
                   onClick={() => setPeriodo(p)}>{label}</button>
               ))}
