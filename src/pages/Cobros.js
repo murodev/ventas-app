@@ -125,22 +125,21 @@ export default function Cobros() {
         .eq('idventa', selected.idventa)
       if (errVenta) throw errVenta
 
-      await cargar()
-      // Refrescar modal con datos actualizados
-      const updatedVenta = {
-        ...selected,
+      // Refrescar modal inmediatamente con nuevos valores
+      setSelected(prev => ({
+        ...prev,
         montopendiente: nuevoPendiente,
-        estado: nuevoEstado,
+        estado:         nuevoEstado,
         entregado,
-      }
-      setSelected(updatedVenta)
+      }))
       setPagosHist(prev => [{
-        idpago: Date.now(),
+        idpago:      Date.now(),
         monto,
-        fechapago: new Date().toISOString(),
+        fechapago:   new Date().toISOString(),
         mediospagos: { mediopago: mediosPago.find(m => m.idmediopago === Number(nuevoPago.idmediopago))?.mediopago || '' }
       }, ...prev])
       setNuevoPago({ monto: '', idmediopago: '' })
+      await cargar()
 
       if (nuevoEstado === 'Pagado') setModal(null)
     } catch (e) {
