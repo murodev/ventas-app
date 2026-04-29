@@ -27,11 +27,13 @@ export default function Stock() {
   const [loading,    setLoading]    = useState(true)
   const [busq,       setBusq]       = useState('')
   const [filtro,     setFiltro]     = useState('todos') // todos | bajo | agotado
-  const [modal,      setModal]      = useState(null)    // null | 'editar' | 'nuevo'
+  const [modal,      setModal]      = useState(null)    // null | 'movimiento' | 'nuevo' | 'editar'
   const [selected,   setSelected]   = useState(null)
   const [form,       setForm]       = useState({ idproducto: '', lote: '', cantidad: '' })
   const [saving,     setSaving]     = useState(false)
   const [error,      setError]      = useState('')
+  const [tipoMov,    setTipoMov]    = useState('agregar')
+  const [cantMov,    setCantMov]    = useState('')
   const [historial,  setHistorial]  = useState([])
   const [loadingHist,setLoadingHist]= useState(false)
   const [showHist,   setShowHist]   = useState(false)
@@ -79,6 +81,35 @@ export default function Stock() {
     setError('')
     setShowHist(false)
     setModal('editar')
+  }
+
+  const abrirMovimiento = (s) => {
+    setSelected(s)
+    setTipoMov('agregar')
+    setCantMov('')
+    setError('')
+    setModal('movimiento')
+  }
+
+  const registrarMovimiento = async () => {
+    setError('')
+    const cant = Number(cantMov)
+    if (!cant || cant <= 0) return setError('Ingresá una cantidad válida.')
+    if (tipoMov === 'quitar' && cant > selected.cantidad)
+      return setError(`No podés quitar más de lo que hay (${selected.cantidad} u.).`)
+    setSaving(true)
+    try {
+      const nuevaCant = tipoMov === 'agregar'
+        ? selected.cantidad + cant
+        : Math.max(0, selected.cantidad - cant)
+      await supabase.from('stock').update({ cantidad: nuevaCant }).eq('id', selected.id)
+      await cargar()
+      setModal(null)
+    } catch (e) {
+      setError('Error: ' + (e.message || 'intentá de nuevo.'))
+    } finally {
+      setSaving(false)
+    }
   }
 
   const verHistorial = async (s) => {
@@ -235,11 +266,12 @@ export default function Stock() {
                     <div className={styles.bar} style={{ width: `${pct(s.cantidad)}%`, background: barColor(s.cantidad) }} />
                   </div>
                   <div className={styles.actions}>
+                    <button className={styles.movBtn} onClick={() => abrirMovimiento(s)} title="Agregar / Quitar">
+                      <Icon d={ICONS.plus} size={16} />
+                      <Icon d={ICONS.minus} size={16} />
+                    </button>
                     <button className={styles.iconBtn} onClick={() => verHistorial(s)} title="Ver historial">
                       <Icon d={ICONS.history} size={14} />
-                    </button>
-                    <button className={styles.iconBtn} onClick={() => abrirEditar(s)} title="Editar">
-                      <Icon d={ICONS.edit} size={14} />
                     </button>
                   </div>
                 </div>
@@ -247,87 +279,116 @@ export default function Stock() {
             </div>
       }
 
-      {/* Modal editar / nuevo */}
-      {(modal === 'editar' || modal === 'nuevo') && (
+      {/* Modal movimiento agregar/quitar */}
+      {modal === 'movimiento' && selected && (
         <div className={styles.overlay} onClick={() => setModal(null)}>
-          <div className={styles.modal} onClick={e => e.stopPropagation()}>
+          <div className={styles.modal} style={{ maxWidth: 400 }} onClick={e => e.stopPropagation()}>
             <div className={styles.modalHeader}>
-              <span>{modal === 'nuevo' ? 'Agregar stock' : 'Editar lote'}</span>
+              <span>{selected.productos?.producto || '—'} · Lote {selected.lote}</span>
               <button className={styles.closeBtn} onClick={() => setModal(null)}>
                 <Icon d={ICONS.close} size={16} />
               </button>
             </div>
             <div className={styles.modalBody}>
-              <div className="field">
-                <label>Producto</label>
-                <select value={form.idproducto}
-                  onChange={e => setForm(f => ({ ...f, idproducto: e.target.value }))}
-                  disabled={modal === 'editar'}>
-                  <option value="">Seleccioná un producto...</option>
-                  {productos.map(p => (
-                    <option key={p.idproducto} value={p.idproducto}>{p.producto}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="field">
-                <label>Lote</label>
-                <input type="text" placeholder="Ej: L025"
-                  value={form.lote}
-                  onChange={e => setForm(f => ({ ...f, lote: e.target.value }))} />
-              </div>
-              <div className="field">
-                <label>{modal === 'nuevo' ? 'Cantidad a agregar' : 'Cantidad actual'}</label>
-                <input type="number" min="0" placeholder="0"
-                  value={form.cantidad}
-                  onChange={e => setForm(f => ({ ...f, cantidad: e.target.value }))} />
-                {modal === 'nuevo' && (
-                  <div style={{ fontSize: 11, color: 'var(--text3)', marginTop: 4 }}>
-                    Si el lote ya existe, se sumará a la cantidad actual.
-                  </div>
-                )}
+              {/* Stock actual */}
+              <div className={styles.stockActual}>
+                <span className={styles.stockLabel}>Stock actual</span>
+                <span className={styles.stockVal} style={{ color: barColor(selected.cantidad) }}>
+                  {selected.cantidad} u.
+                </span>
               </div>
 
-              {error && <div className="err" style={{ marginBottom: 12 }}>{error}</div>}
+              {/* Selector agregar / quitar */}
+              <div className={styles.tipoMovWrap}>
+                <button
+                  className={`${styles.tipoMovBtn} ${tipoMov === 'agregar' ? styles.tipoMovActive : ''}`}
+                  onClick={() => setTipoMov('agregar')}>
+                  <Icon d={ICONS.plus} size={14} /> Agregar
+                </button>
+                <button
+                  className={`${styles.tipoMovBtn} ${tipoMov === 'quitar' ? styles.tipoMovActiveDanger : ''}`}
+                  onClick={() => setTipoMov('quitar')}>
+                  <Icon d={ICONS.minus} size={14} /> Quitar
+                </button>
+              </div>
 
-              {/* Historial de egresos */}
-              {showHist && (
-                <div className={styles.histSection}>
-                  <div className={styles.histTitle}>
-                    <Icon d={ICONS.history} size={13} /> Últimas salidas de este lote
-                  </div>
-                  {loadingHist
-                    ? <div className={styles.empty} style={{ padding: '12px 0' }}>Cargando...</div>
-                    : historial.length === 0
-                      ? <div className={styles.empty} style={{ padding: '12px 0' }}>Sin movimientos registrados.</div>
-                      : historial.map((h, i) => (
-                          <div key={i} className={styles.histRow}>
-                            <div>
-                              <div className={styles.histLabel}>Venta #{h.idventa}</div>
-                              <div className={styles.histFecha}>{fmtFecha(h.fecha_ins)}</div>
-                            </div>
-                            <div style={{ textAlign: 'right' }}>
-                              <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--danger)' }}>
-                                −{h.cantidad} u.
-                              </div>
-                              <div style={{ fontSize: 11, color: 'var(--text3)' }}>{fmt(h.precio)} c/u</div>
-                            </div>
-                          </div>
-                        ))
-                  }
+              <div className="field">
+                <label>Cantidad a {tipoMov}</label>
+                <input type="number" min="1" step="1" placeholder="0"
+                  value={cantMov} onChange={e => setCantMov(e.target.value)} autoFocus />
+              </div>
+
+              {/* Preview resultado */}
+              {cantMov && Number(cantMov) > 0 && (
+                <div className={styles.preview}>
+                  <span>{selected.cantidad} u.</span>
+                  <span style={{ color: tipoMov === 'agregar' ? 'var(--success)' : 'var(--danger)' }}>
+                    {tipoMov === 'agregar' ? '+' : '−'}{cantMov} u.
+                  </span>
+                  <span style={{ fontWeight: 600 }}>
+                    = {tipoMov === 'agregar'
+                        ? selected.cantidad + Number(cantMov)
+                        : Math.max(0, selected.cantidad - Number(cantMov))
+                      } u.
+                  </span>
                 </div>
               )}
 
+              {error && <div className="err" style={{ marginBottom: 10 }}>{error}</div>}
+
               <div className={styles.modalFooter}>
-                {modal === 'editar' && (
-                  <button className="btn btn-danger" onClick={eliminar}>
-                    <Icon d={ICONS.trash} size={13} /> Eliminar lote
-                  </button>
-                )}
-                <div style={{ flex: 1 }} />
                 <button className="btn btn-ghost" onClick={() => setModal(null)}>Cancelar</button>
-                <button className="btn btn-primary" onClick={guardar} disabled={saving}>
-                  {saving ? 'Guardando...' : <><Icon d={ICONS.check} size={13} /> Guardar</>}
+                <button
+                  className={`btn ${tipoMov === 'agregar' ? 'btn-primary' : 'btn-danger'}`}
+                  onClick={registrarMovimiento} disabled={saving}>
+                  {saving ? 'Guardando...' : tipoMov === 'agregar'
+                    ? <><Icon d={ICONS.plus} size={13} /> Agregar stock</>
+                    : <><Icon d={ICONS.minus} size={13} /> Quitar stock</>}
                 </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal historial (solo lectura) */}
+      {modal === 'editar' && selected && (
+        <div className={styles.overlay} onClick={() => setModal(null)}>
+          <div className={styles.modal} onClick={e => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <span>Historial · {selected.productos?.producto} · Lote {selected.lote}</span>
+              <button className={styles.closeBtn} onClick={() => setModal(null)}>
+                <Icon d={ICONS.close} size={16} />
+              </button>
+            </div>
+            <div className={styles.modalBody}>
+              <div className={styles.histSection}>
+                <div className={styles.histTitle}>
+                  <Icon d={ICONS.history} size={13} /> Últimas salidas de este lote
+                </div>
+                {loadingHist
+                  ? <div className={styles.empty} style={{ padding: '12px 0' }}>Cargando...</div>
+                  : historial.length === 0
+                    ? <div className={styles.empty} style={{ padding: '12px 0' }}>Sin movimientos registrados.</div>
+                    : historial.map((h, i) => (
+                        <div key={i} className={styles.histRow}>
+                          <div>
+                            <div className={styles.histLabel}>Venta #{h.idventa}</div>
+                            <div className={styles.histFecha}>{fmtFecha(h.fecha_ins)}</div>
+                          </div>
+                          <div style={{ textAlign: 'right' }}>
+                            <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--danger)' }}>
+                              −{h.cantidad} u.
+                            </div>
+                            <div style={{ fontSize: 11, color: 'var(--text3)' }}>{fmt(h.precio)} c/u</div>
+                          </div>
+                        </div>
+                      ))
+                }
+              </div>
+              <div className={styles.modalFooter}>
+                <div style={{ flex: 1 }} />
+                <button className="btn btn-ghost" onClick={() => setModal(null)}>Cerrar</button>
               </div>
             </div>
           </div>
