@@ -223,7 +223,7 @@ export default function Insumos() {
               onClick={() => setFiltro(f)}>{label}</button>
           ))}
         </div>
-        <button className="btn btn-primary" onClick={abrirNuevo}>
+        <button className="btn btn-primary" onClick={abrirNuevo} style={{display:'none'}}>
           <Icon d={ICONS.plus} size={14} /> Nuevo insumo
         </button>
       </div>
@@ -272,11 +272,8 @@ export default function Insumos() {
                   <div className={styles.actions}>
                     <button className={`${styles.iconBtn} ${styles.movBtn}`}
                       onClick={() => abrirMovimiento(ins)} title="Agregar / Quitar">
-                      <Icon d={ICONS.plus} size={13} />
-                      <Icon d={ICONS.minus} size={13} />
-                    </button>
-                    <button className={styles.iconBtn} onClick={() => abrirEditar(ins)} title="Editar">
-                      <Icon d={ICONS.edit} size={14} />
+                      <Icon d={ICONS.plus} size={16} />
+                      <Icon d={ICONS.minus} size={16} />
                     </button>
                   </div>
                 </div>

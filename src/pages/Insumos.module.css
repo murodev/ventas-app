@@ -73,7 +73,15 @@
   border-radius: 4px; display: flex; cursor: pointer; transition: color .12s, background .12s;
 }
 .iconBtn:hover { color: var(--accent); background: var(--bg3); }
-.movBtn { gap: 2px; }
+.movBtn {
+  gap: 4px;
+  padding: 7px 12px !important;
+  border: 1px solid var(--border2) !important;
+  border-radius: var(--radius-sm) !important;
+  background: var(--bg3) !important;
+  color: var(--text2) !important;
+  font-size: 13px;
+}
 
 .empty { text-align: center; padding: 48px; font-size: 13px; color: var(--text3); }
 
