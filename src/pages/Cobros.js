@@ -134,22 +134,27 @@ export default function Cobros() {
         .eq('idventa', selected.idventa)
       if (errVenta) throw errVenta
 
-      // Actualizar modal inmediatamente
-      setSelected(prev => ({
-        ...prev,
-        montopendiente: nuevoPendiente,
-        estado:         nuevoEstado,
-        entregado,
-      }))
-      setPagosHist(prev => [{
-        idpago:      Date.now(),
-        monto,
-        fechapago:   new Date().toISOString(),
-        mediospagos: { mediopago: mediosPago.find(m => m.idmediopago === Number(nuevoPago.idmediopago))?.mediopago || '' }
-      }, ...prev])
+      // 3. Leer la venta actualizada directo de Supabase para evitar caché
+      const { data: ventaFresca } = await supabase
+        .from('ventas')
+        .select('idventa, fecha, montoventa, montopendiente, estado, entregado, idcliente, clientes(nombre, alias)')
+        .eq('idventa', selected.idventa)
+        .single()
+
+      // 4. Leer los pagos actualizados directo de Supabase
+      const { data: pagosFrescos } = await supabase
+        .from('pagos')
+        .select('idpago, monto, fechapago, mediospagos(mediopago)')
+        .eq('idventa', selected.idventa)
+        .order('fechapago', { ascending: false })
+
+      // Actualizar modal con datos reales de la DB
+      if (ventaFresca) setSelected(ventaFresca)
+      if (pagosFrescos) setPagosHist(pagosFrescos)
       setNuevoPago({ monto: '', idmediopago: '' })
-      // Recargar tabla y sincronizar selected con datos de Supabase
-      await cargar(true)
+
+      // Recargar la tabla completa
+      await cargar(false)
 
       if (nuevoEstado === 'Pagado') setModal(null)
     } catch (e) {
