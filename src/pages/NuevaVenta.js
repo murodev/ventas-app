@@ -15,6 +15,7 @@ const ICONS = {
   plus:    'M12 5v14M5 12h14',
   trash:   'M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6',
   check:   'M20 6L9 17l-5-5',
+  close:   'M18 6L6 18M6 6l12 12',
   user:    'M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2M12 11a4 4 0 100-8 4 4 0 000 8z',
   cart:    'M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4zM3 6h18M16 10a4 4 0 01-8 0',
   money:   'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z',
@@ -197,6 +198,9 @@ export default function NuevaVenta() {
   if (success) return (
     <div className={styles.successWrap}>
       <div className={styles.successCard}>
+        <button className={styles.successClose} onClick={nuevaVenta} title="Cerrar">
+          <Icon d={ICONS.close} size={16} />
+        </button>
         <div className={styles.successIcon}><Icon d={ICONS.check} size={28} /></div>
         <h2 className={styles.successTitle}>¡Venta registrada!</h2>
         <p className={styles.successSub}>Venta #{ventaId} · {fmt(totalVenta)}</p>
@@ -204,9 +208,14 @@ export default function NuevaVenta() {
           <span>Cliente: <strong>{clienteNombre}</strong></span>
           <span>Estado: <strong>Pendiente de cobro</strong></span>
         </div>
-        <button className={`btn btn-primary ${styles.successBtn}`} onClick={nuevaVenta}>
-          <Icon d={ICONS.plus} /> Nueva venta
-        </button>
+        <div className={styles.successBtns}>
+          <button className="btn btn-ghost" onClick={nuevaVenta}>
+            <Icon d={ICONS.plus} size={13} /> Nueva venta
+          </button>
+          <button className="btn btn-primary" onClick={nuevaVenta}>
+            <Icon d={ICONS.check} size={13} /> Listo
+          </button>
+        </div>
       </div>
     </div>
   )
