@@ -35,7 +35,7 @@ export default function Cobros() {
   const [error,       setError]       = useState('')
   const [entregado,   setEntregado]   = useState(false)
 
-  const cargar = async (actualizarSelected = false) => {
+  const cargar = async () => {
     setLoading(true)
     const [{ data: v }, { data: m }] = await Promise.all([
       supabase
@@ -44,18 +44,18 @@ export default function Cobros() {
         .order('fecha', { ascending: false }),
       supabase.from('mediospagos').select('idmediopago, mediopago'),
     ])
-    const ventasData = v || []
-    setVentas(ventasData)
+    setVentas(v || [])
     setMediosPago(m || [])
-    // Si hay un modal abierto, sincronizar selected con los datos frescos
-    if (actualizarSelected) {
-      setSelected(prev => {
-        if (!prev) return prev
-        const fresco = ventasData.find(x => x.idventa === prev.idventa)
-        return fresco ? { ...prev, ...fresco } : prev
-      })
-    }
     setLoading(false)
+  }
+
+  // Recarga solo la tabla sin tocar el modal ni loading
+  const recargarTabla = async () => {
+    const { data: v } = await supabase
+      .from('ventas')
+      .select('idventa, fecha, montoventa, montopendiente, estado, entregado, idcliente, clientes(nombre, alias)')
+      .order('fecha', { ascending: false })
+    setVentas(v || [])
   }
 
   useEffect(() => { cargar() }, [])
@@ -153,8 +153,8 @@ export default function Cobros() {
       if (pagosFrescos) setPagosHist(pagosFrescos)
       setNuevoPago({ monto: '', idmediopago: '' })
 
-      // Recargar la tabla completa
-      await cargar(false)
+      // Recargar tabla en segundo plano sin interrumpir el modal
+      recargarTabla()
 
       if (nuevoEstado === 'Pagado') setModal(null)
     } catch (e) {
