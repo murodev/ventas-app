@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { generarRemito } from '../lib/remito'
+import { enviarRemitoEmail } from '../lib/email'
 import styles from './Cobros.module.css'
 
 const Icon = ({ d, size = 16 }) => (
@@ -19,6 +20,7 @@ const ICONS = {
   history: 'M12 8v4l3 3M3.05 11a9 9 0 109.9-8.95',
   truck:   'M1 3h15v13H1zM16 8h4l3 3v5h-7V8zM5.5 19a1.5 1.5 0 100-3 1.5 1.5 0 000 3zM18.5 19a1.5 1.5 0 100-3 1.5 1.5 0 000 3z',
   pdf:     'M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8zM14 2v6h6M9 13h6M9 17h4',
+  mail:    'M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2zm16 2l-8 5-8-5',
 }
 
 export default function Cobros() {
@@ -35,6 +37,12 @@ export default function Cobros() {
   const [nuevoPago,   setNuevoPago]   = useState({ monto: '', idmediopago: '' })
   const [saving,      setSaving]      = useState(false)
   const [error,       setError]       = useState('')
+  const [emailModal,  setEmailModal]  = useState(false)
+  const [emailDest,   setEmailDest]   = useState('')
+  const [emailSending,setEmailSending]= useState(false)
+  const [emailOk,     setEmailOk]     = useState(false)
+  const [emailErr,    setEmailErr]    = useState('')
+  const [ventaEmail,  setVentaEmail]  = useState(null)
   const [entregado,   setEntregado]   = useState(false)
 
   const cargar = async () => {
@@ -200,6 +208,54 @@ export default function Cobros() {
       if (cli) ventaCompleta = { ...v, clientes: { ...v.clientes, ...cli } }
     }
     generarRemito(ventaCompleta, det, pag)
+  }
+
+  const abrirEmail = async (v) => {
+    // Cargar detalle y pagos si no están
+    let det = detalle
+    let pag = pagosHist
+    if (!det.length || selected?.idventa !== v.idventa) {
+      const [{ data: d }, { data: p }] = await Promise.all([
+        supabase.from('detalleventas')
+          .select('idproducto, cantidad, precio, lote, subtotal, productos(producto)')
+          .eq('idventa', v.idventa),
+        supabase.from('pagos')
+          .select('idpago, monto, fechapago, mediospagos(mediopago)')
+          .eq('idventa', v.idventa)
+          .order('fechapago'),
+      ])
+      det = d || []
+      pag = p || []
+    }
+    let ventaCompleta = v
+    if (!v.clientes?.direccion) {
+      const { data: cli } = await supabase
+        .from('clientes')
+        .select('nombre, alias, telefono, direccion, email')
+        .eq('idcliente', v.idcliente)
+        .single()
+      if (cli) ventaCompleta = { ...v, clientes: { ...v.clientes, ...cli } }
+    }
+    setVentaEmail({ venta: ventaCompleta, detalle: det, pagos: pag })
+    setEmailDest(ventaCompleta.clientes?.email || '')
+    setEmailOk(false)
+    setEmailErr('')
+    setEmailModal(true)
+  }
+
+  const enviarEmail = async () => {
+    setEmailErr('')
+    if (!emailDest.trim() || !emailDest.includes('@'))
+      return setEmailErr('Ingresá un email válido.')
+    setEmailSending(true)
+    try {
+      await enviarRemitoEmail({ ...ventaEmail, emailDestino: emailDest })
+      setEmailOk(true)
+    } catch (e) {
+      setEmailErr('Error al enviar: ' + (e?.text || e?.message || 'intentá de nuevo.'))
+    } finally {
+      setEmailSending(false)
+    }
   }
 
   const fmt      = (n) => '$' + Number(n || 0).toLocaleString('es-AR', { minimumFractionDigits: 0 })
@@ -423,11 +479,65 @@ export default function Cobros() {
                 </div>
               )}
 
-              {/* Botón PDF siempre visible en el modal */}
-              <button className={`btn btn-ghost ${styles.pdfModalBtn}`}
-                onClick={() => imprimirRemito(selected)}>
-                <Icon d={ICONS.pdf} size={14} /> Generar remito PDF
+              {/* Botones PDF y Email siempre visibles en el modal */}
+              <div style={{ display:'flex', gap:8, marginTop:14 }}>
+                <button className={`btn btn-ghost ${styles.pdfModalBtn}`}
+                  onClick={() => imprimirRemito(selected)}>
+                  <Icon d={ICONS.pdf} size={14} /> Generar PDF
+                </button>
+                <button className={`btn btn-ghost ${styles.pdfModalBtn}`}
+                  onClick={() => abrirEmail(selected)}>
+                  <Icon d={ICONS.mail} size={14} /> Enviar por email
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* ── Modal enviar email ── */}
+      {emailModal && ventaEmail && (
+        <div className={styles.overlay} onClick={() => setEmailModal(false)}>
+          <div className={styles.modal} style={{ maxWidth: 420 }} onClick={e => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <span>Enviar remito por email</span>
+              <button className={styles.closeBtn} onClick={() => setEmailModal(false)}>
+                <Icon d={ICONS.close} size={16} />
               </button>
+            </div>
+            <div className={styles.modalBody}>
+              {emailOk
+                ? <div className={styles.emailOk}>
+                    <Icon d={ICONS.check} size={24} />
+                    <p>¡Email enviado correctamente!</p>
+                    <p style={{ fontSize:12, color:'var(--text3)', marginTop:4 }}>
+                      Remito V-{ventaEmail.venta.idventa} enviado a {emailDest}
+                    </p>
+                    <button className="btn btn-ghost" style={{ marginTop:16 }}
+                      onClick={() => setEmailModal(false)}>Cerrar</button>
+                  </div>
+                : <>
+                    <div className={styles.emailInfo}>
+                      <span>Venta #{ventaEmail.venta.idventa}</span>
+                      <span>{ventaEmail.venta.clientes?.nombre}</span>
+                    </div>
+                    <div className="field">
+                      <label>Email del destinatario</label>
+                      <input type="email" placeholder="correo@ejemplo.com"
+                        value={emailDest}
+                        onChange={e => setEmailDest(e.target.value)}
+                        autoFocus />
+                    </div>
+                    {emailErr && <div className="err" style={{ marginBottom: 10 }}>{emailErr}</div>}
+                    <div className={styles.modalFooter}>
+                      <button className="btn btn-ghost" onClick={() => setEmailModal(false)}>Cancelar</button>
+                      <button className="btn btn-primary" onClick={enviarEmail} disabled={emailSending}>
+                        {emailSending
+                          ? 'Enviando...'
+                          : <><Icon d={ICONS.mail} size={13} /> Enviar remito</>}
+                      </button>
+                    </div>
+                  </>
+              }
             </div>
           </div>
         </div>
