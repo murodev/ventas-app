@@ -14,12 +14,14 @@ const ICONS = {
   user:    'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z',
   factory: 'M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z',
   refresh: 'M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15',
+  coin:    'M12 2a10 10 0 100 20A10 10 0 0012 2zm0 0v20M2 12h20M12 2c-4 0-7 4.5-7 10s3 10 7 10M12 2c4 0 7 4.5 7 10s-3 10-7 10',
 }
 
 const TABS = [
-  { id: 'ventas',    label: 'Ventas por período', icon: ICONS.chart  },
-  { id: 'cobros',    label: 'Cobros pendientes',  icon: ICONS.money  },
-  { id: 'jornadas',  label: 'Producción diaria',  icon: ICONS.factory},
+  { id: 'ventas',          label: 'Ventas por período',  icon: ICONS.chart   },
+  { id: 'cobros',          label: 'Cobros pendientes',   icon: ICONS.money   },
+  { id: 'cobros_realizados', label: 'Cobros realizados', icon: ICONS.coin    },
+  { id: 'jornadas',        label: 'Producción diaria',   icon: ICONS.factory },
 ]
 
 // ── Mini bar chart en SVG puro ──────────────────────────────────
@@ -93,9 +95,10 @@ export default function Reportes() {
   const [loading,   setLoading]   = useState(false)
 
   // Datos
-  const [ventasData,   setVentasData]   = useState({ serie: [], total: 0, cant: 0, promedio: 0 })
-  const [cobrosData,   setCobrosData]   = useState([])
-  const [jornadasData, setJornadasData] = useState([])
+  const [ventasData,        setVentasData]        = useState({ serie: [], total: 0, cant: 0, promedio: 0 })
+  const [cobrosData,        setCobrosData]        = useState([])
+  const [cobrosRealizados,  setCobrosRealizados]  = useState({ rows: [], porMedio: [], total: 0, cant: 0 })
+  const [jornadasData,      setJornadasData]      = useState([])
 
   const fmt = (n) => '$' + Number(n || 0).toLocaleString('es-AR', { minimumFractionDigits: 0 })
   const fmtFecha = (s) => s ? new Date(s + 'T00:00:00').toLocaleDateString('es-AR', { day:'2-digit', month:'short' }) : '—'
@@ -145,7 +148,39 @@ export default function Reportes() {
     setLoading(false)
   }, [getRango])
 
-  // ── Reporte cobros ───────────────────────────────────────────
+  // ── Reporte cobros realizados ────────────────────────────────
+  const cargarCobrosRealizados = useCallback(async () => {
+    setLoading(true)
+    const { desde, hasta } = getRango()
+    const { data } = await supabase
+      .from('pagos')
+      .select('idpago, monto, fechapago, idmediopago, mediospagos(mediopago), ventas(idventa, clientes(nombre))')
+      .gte('fechapago', desde).lte('fechapago', hasta)
+      .order('fechapago', { ascending: false })
+
+    const rows = data || []
+
+    // Agrupar por medio de pago
+    const byMedio = {}
+    rows.forEach(p => {
+      const medio = p.mediospagos?.mediopago || 'Sin especificar'
+      if (!byMedio[medio]) byMedio[medio] = { medio, total: 0, cant: 0 }
+      byMedio[medio].total += p.monto || 0
+      byMedio[medio].cant  += 1
+    })
+
+    const total = rows.reduce((s, p) => s + (p.monto || 0), 0)
+
+    setCobrosRealizados({
+      rows,
+      porMedio: Object.values(byMedio).sort((a, b) => b.total - a.total),
+      total,
+      cant: rows.length,
+    })
+    setLoading(false)
+  }, [getRango])
+
+  // ── Reporte cobros pendientes ────────────────────────────────
   const cargarCobros = useCallback(async () => {
     setLoading(true)
     const { data } = await supabase
@@ -182,10 +217,11 @@ export default function Reportes() {
   }, [])
 
   useEffect(() => {
-    if (tab === 'ventas')   cargarVentas()
-    if (tab === 'cobros')   cargarCobros()
-    if (tab === 'jornadas') cargarJornadas()
-  }, [tab, periodo, cargarVentas, cargarCobros, cargarJornadas])
+    if (tab === 'ventas')            cargarVentas()
+    if (tab === 'cobros')            cargarCobros()
+    if (tab === 'cobros_realizados') cargarCobrosRealizados()
+    if (tab === 'jornadas')          cargarJornadas()
+  }, [tab, periodo, cargarVentas, cargarCobros, cargarCobrosRealizados, cargarJornadas])
 
   const totalCobros = cobrosData.reduce((s, c) => s + c.total, 0)
 
@@ -370,6 +406,139 @@ export default function Reportes() {
 
               {cobrosData.length === 0 && (
                 <div className={styles.empty}>No hay cobros pendientes. ¡Todo al día!</div>
+              )}
+            </>
+          }
+        </div>
+      )}
+
+      {/* ══ REPORTE COBROS REALIZADOS ══ */}
+      {tab === 'cobros_realizados' && (
+        <div>
+          <div className={styles.periodoRow}>
+            <div className={styles.filtros}>
+              {[['mes_actual','Mes actual'],['dia','Hoy'],['semana','Últimos 7 días'],['mes','Últimos 30 días']].map(([p, label]) => (
+                <button key={p} className={`${styles.filtroBtn} ${periodo === p ? styles.active : ''}`}
+                  onClick={() => setPeriodo(p)}>{label}</button>
+              ))}
+            </div>
+            <button className={`btn btn-ghost ${styles.refreshBtn}`} onClick={cargarCobrosRealizados}>
+              <Icon d={ICONS.refresh} size={13} />
+            </button>
+          </div>
+
+          {loading
+            ? <div className={styles.loading}>Cargando...</div>
+            : <>
+              {/* Métricas */}
+              <div className={styles.metrics}>
+                <div className={styles.metric}>
+                  <div className={styles.metricVal} style={{ color: 'var(--success)' }}>
+                    {fmt(cobrosRealizados.total)}
+                  </div>
+                  <div className={styles.metricLabel}>Total cobrado</div>
+                </div>
+                <div className={styles.metric}>
+                  <div className={styles.metricVal}>{cobrosRealizados.cant}</div>
+                  <div className={styles.metricLabel}>Cobros realizados</div>
+                </div>
+                <div className={styles.metric}>
+                  <div className={styles.metricVal}>
+                    {cobrosRealizados.cant
+                      ? fmt(cobrosRealizados.total / cobrosRealizados.cant)
+                      : '$0'}
+                  </div>
+                  <div className={styles.metricLabel}>Promedio por cobro</div>
+                </div>
+                <div className={styles.metric}>
+                  <div className={styles.metricVal}>{cobrosRealizados.porMedio.length}</div>
+                  <div className={styles.metricLabel}>Medios de pago usados</div>
+                </div>
+              </div>
+
+              {/* Gráfico por medio de pago */}
+              {cobrosRealizados.porMedio.length > 0 && (
+                <div className={styles.chartCard}>
+                  <div className={styles.chartTitle}>Total cobrado por medio de pago</div>
+                  <BarChart
+                    data={cobrosRealizados.porMedio.map(m => ({ label: m.medio, total: m.total }))}
+                    labelKey="label" valueKey="total" fmt={fmt}
+                    colorFn={(_, i) => {
+                      const cols = ['var(--accent)', 'var(--success)', 'var(--warning)', '#a78bfa', '#f472b6']
+                      return cols[i % cols.length]
+                    }}
+                  />
+                </div>
+              )}
+
+              {/* Tabla agrupada por medio de pago */}
+              {cobrosRealizados.porMedio.length > 0 && (
+                <div className={styles.tableCard} style={{ marginBottom: 14 }}>
+                  <div className={styles.tableTitle}>Resumen por medio de pago</div>
+                  <div className={styles.table}>
+                    <div className={styles.tableHead} style={{ gridTemplateColumns: '1fr 80px 120px' }}>
+                      <span>Medio de pago</span>
+                      <span>Cobros</span>
+                      <span>Total</span>
+                    </div>
+                    {cobrosRealizados.porMedio.map((m, i) => (
+                      <div key={i} className={styles.tableRow} style={{ gridTemplateColumns: '1fr 80px 120px' }}>
+                        <span className={styles.nameCell}>{m.medio}</span>
+                        <span className={styles.cell}>{m.cant}</span>
+                        <span className={styles.montoCell} style={{ color: 'var(--success)' }}>
+                          {fmt(m.total)}
+                        </span>
+                      </div>
+                    ))}
+                    {/* Total */}
+                    <div className={styles.tableRow} style={{
+                      gridTemplateColumns: '1fr 80px 120px',
+                      background: 'var(--bg3)', fontWeight: 600
+                    }}>
+                      <span className={styles.nameCell}>TOTAL</span>
+                      <span className={styles.cell}>{cobrosRealizados.cant}</span>
+                      <span className={styles.montoCell} style={{ color: 'var(--success)' }}>
+                        {fmt(cobrosRealizados.total)}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Tabla detalle de cobros */}
+              {cobrosRealizados.rows.length > 0 && (
+                <div className={styles.tableCard}>
+                  <div className={styles.tableTitle}>Detalle de cobros</div>
+                  <div className={styles.table}>
+                    <div className={styles.tableHead} style={{ gridTemplateColumns: '50px 1.5fr 120px 110px 120px' }}>
+                      <span>#</span>
+                      <span>Cliente</span>
+                      <span>Fecha</span>
+                      <span>Medio</span>
+                      <span>Monto</span>
+                    </div>
+                    {cobrosRealizados.rows.map((p, i) => (
+                      <div key={i} className={styles.tableRow}
+                        style={{ gridTemplateColumns: '50px 1.5fr 120px 110px 120px' }}>
+                        <span className={styles.idCell}>#{p.ventas?.idventa}</span>
+                        <span className={styles.nameCell}>{p.ventas?.clientes?.nombre || '—'}</span>
+                        <span className={styles.cell}>
+                          {p.fechapago ? new Date(p.fechapago).toLocaleDateString('es-AR', {
+                            day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit'
+                          }) : '—'}
+                        </span>
+                        <span className={styles.cell}>{p.mediospagos?.mediopago || '—'}</span>
+                        <span className={styles.montoCell} style={{ color: 'var(--success)' }}>
+                          {fmt(p.monto)}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {cobrosRealizados.rows.length === 0 && (
+                <div className={styles.empty}>No hay cobros registrados en el período seleccionado.</div>
               )}
             </>
           }
