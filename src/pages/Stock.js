@@ -230,9 +230,9 @@ export default function Stock() {
             </button>
           ))}
         </div>
-        <button className="btn btn-primary" onClick={abrirNuevo}>
+        {/* <button className="btn btn-primary" onClick={abrirNuevo}>
           <Icon d={ICONS.plus} size={14} /> Agregar stock
-        </button>
+        </button> */}
       </div>
 
       {/* Tabla */}
