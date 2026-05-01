@@ -43,6 +43,7 @@ export default function Cobros() {
   const [emailOk,     setEmailOk]     = useState(false)
   const [emailErr,    setEmailErr]    = useState('')
   const [ventaEmail,  setVentaEmail]  = useState(null)
+  const [confirmCancel, setConfirmCancel] = useState(false)
   const [entregado,   setEntregado]   = useState(false)
 
   const cargar = async () => {
@@ -91,6 +92,7 @@ export default function Cobros() {
     setNuevoPago({ monto: '', idmediopago: '' })
     setError('')
     setEntregado(v.entregado || false)
+    setConfirmCancel(false)
     setModal('cobro')
     setLoadingDet(true)
 
@@ -258,6 +260,66 @@ export default function Cobros() {
     }
   }
 
+  const cancelarVenta = async () => {
+    setSaving(true)
+    setError('')
+    try {
+      // Asegurar que tenemos el detalle cargado
+      let det = detalle
+      if (!det.length) {
+        const { data: d } = await supabase
+          .from('detalleventas')
+          .select('idproducto, cantidad, lote')
+          .eq('idventa', selected.idventa)
+        det = d || []
+      }
+
+      if (!det.length) {
+        setError('No se encontró el detalle de la venta.')
+        setSaving(false)
+        return
+      }
+
+      // 1. Devolver stock por cada producto
+      for (const d of det) {
+        const { data: stockActual } = await supabase
+          .from('stock')
+          .select('id, cantidad')
+          .eq('idproducto', d.idproducto)
+          .eq('lote', d.lote)
+          .single()
+
+        if (stockActual) {
+          await supabase.from('stock')
+            .update({ cantidad: stockActual.cantidad + Number(d.cantidad) })
+            .eq('id', stockActual.id)
+        } else {
+          await supabase.from('stock').insert({
+            idproducto: d.idproducto,
+            lote:       d.lote,
+            cantidad:   Number(d.cantidad),
+          })
+        }
+      }
+
+      // 2. Marcar la venta como Cancelada
+      const { error: errUpdate } = await supabase
+        .from('ventas')
+        .update({ estado: 'Cancelado', fecha_act: new Date().toISOString() })
+        .eq('idventa', selected.idventa)
+
+      if (errUpdate) throw errUpdate
+
+      await recargarTabla()
+      setModal(null)
+      setConfirmCancel(false)
+    } catch (e) {
+      setError('Error al cancelar: ' + (e.message || 'intentá de nuevo.'))
+    } finally {
+      setSaving(false)
+    }
+  }
+
   const fmt      = (n) => '$' + Number(n || 0).toLocaleString('es-AR', { minimumFractionDigits: 0 })
   const fmtFecha = (s) => s ? new Date(s).toLocaleDateString('es-AR', { day:'2-digit', month:'short', year:'numeric' }) : '—'
   const fmtHora  = (s) => s ? new Date(s).toLocaleTimeString('es-AR', { hour:'2-digit', minute:'2-digit' }) : ''
@@ -266,7 +328,9 @@ export default function Cobros() {
     e === 'Pagado'   ? 'var(--success)' :
     e === 'Parcial'  ? 'var(--warning)' : 'var(--danger)'
   const estadoBadge = (e) =>
-    e === 'Pagado' ? 'badge-ok' : e === 'Parcial' ? 'badge-pending' : 'badge-danger'
+    e === 'Pagado'    ? 'badge-ok'      :
+    e === 'Parcial'   ? 'badge-pending' :
+    e === 'Cancelado' ? 'badge-danger'  : 'badge-danger'
 
   return (
     <div className={styles.wrap}>
@@ -490,6 +554,37 @@ export default function Cobros() {
                   <Icon d={ICONS.mail} size={14} /> Enviar por email
                 </button>
               </div>
+
+              {/* Botón cancelar venta — solo si no fue entregada y sin pagos */}
+              {!selected.entregado &&
+               selected.montopendiente >= selected.montoventa &&
+               selected.estado !== 'Cancelado' && (
+                <div style={{ marginTop: 12 }}>
+                  {!confirmCancel
+                    ? <button className={`btn btn-danger ${styles.cancelarBtn}`}
+                        onClick={() => setConfirmCancel(true)}>
+                        Cancelar venta
+                      </button>
+                    : <div className={styles.confirmCancelBox}>
+                        <p>¿Confirmás la cancelación? Se devolverá el stock de todos los productos.</p>
+                        <div style={{ display:'flex', gap:8, marginTop:10 }}>
+                          <button className="btn btn-ghost" onClick={() => setConfirmCancel(false)}>
+                            No, volver
+                          </button>
+                          <button className="btn btn-danger" onClick={cancelarVenta} disabled={saving}>
+                            {saving ? 'Cancelando...' : 'Sí, cancelar venta'}
+                          </button>
+                        </div>
+                      </div>
+                  }
+                </div>
+              )}
+
+              {selected.estado === 'Cancelado' && (
+                <div className={styles.canceladoMsg}>
+                  Venta cancelada — stock devuelto
+                </div>
+              )}
             </div>
           </div>
         </div>

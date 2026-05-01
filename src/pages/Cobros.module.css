@@ -196,3 +196,20 @@
   padding: 10px 14px; margin-bottom: 16px;
   font-size: 13px; color: var(--text2);
 }
+
+.cancelarBtn {
+  width: 100%; justify-content: center; font-size: 13px;
+}
+.confirmCancelBox {
+  background: var(--danger-bg);
+  border: 1px solid var(--danger);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  font-size: 13px; color: var(--text);
+}
+.canceladoMsg {
+  margin-top: 12px; padding: 10px 14px;
+  background: var(--bg3); border-radius: var(--radius-sm);
+  font-size: 13px; color: var(--text3);
+  text-align: center;
+}

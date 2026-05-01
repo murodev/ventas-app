@@ -34,14 +34,15 @@ export default function Dashboard() {
         .select('idventa, cliente, montopendiente, fecha, clientes(nombre)')
         .gt('montopendiente', 0)
         .order('fecha', { ascending: false })
-        .limit(4)
+        //.limit(10)
 
       // Stock
       const { data: stockData } = await supabase
         .from('stock')
         .select('idproducto, lote, cantidad, productos(producto)')
+        .gt('cantidad', 0)
         .order('cantidad', { ascending: true })
-        .limit(5)
+        .limit(10)
 
       // Métricas calculadas
       const totalMes       = ventasMes?.reduce((s, v) => s + (v.montoventa || 0), 0) || 0

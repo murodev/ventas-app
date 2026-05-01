@@ -46,7 +46,7 @@
 }
 .stockRow:last-child { border-bottom: none; }
 .stockName    { flex: 1; font-size: 12px; color: var(--text); }
-.stockLote    { font-size: 11px; color: var(--text3); min-width: 52px; font-family: var(--mono); }
+.stockLote    { font-size: 14px; color: var(--text); min-width: 52px; font-family: var(--mono); }
 .stockBarWrap { width: 64px; height: 4px; background: var(--border2); border-radius: 2px; }
 .stockBar     { height: 4px; border-radius: 2px; transition: width .3s; }
 .stockQty     { font-size: 11px; color: var(--text2); min-width: 36px; text-align: right; font-family: var(--mono); }
