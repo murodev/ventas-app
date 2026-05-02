@@ -50,17 +50,18 @@ export default function Fabricacion() {
     setLoading(true)
     const hoy = new Date().toISOString().split('T')[0]
 
-    const [{ data: jorn }, { data: ins }, { data: prods }, { data: hist }] = await Promise.all([
-      supabase.from('jornadas').select('*').eq('fecha', hoy).single(),
+    const [{ data: jorns }, { data: ins }, { data: prods }, { data: hist }] = await Promise.all([
+      supabase.from('jornadas').select('*').eq('fecha', hoy).eq('estado', 'abierta').order('abierta_at', { ascending: false }).limit(1),
       supabase.from('insumos').select('*').not('porcionreceta', 'is', null).order('insumo'),
       supabase.from('productos').select('idproducto, producto').order('producto'),
       supabase.from('jornadas').select(`
         id, fecha, estado, masas_total, abierta_at, cerrada_at,
         jornada_produccion(idproducto, lote, cantidad, productos(producto))
-      `).order('fecha', { ascending: false }).limit(10),
+      `).order('abierta_at', { ascending: false }).limit(20),
     ])
 
-    setJornada(jorn || null)
+    const jorn = jorns?.[0] || null
+    setJornada(jorn)
     setInsumos(ins || [])
     setProductos(prods || [])
     setHistorial(hist || [])
@@ -232,7 +233,7 @@ export default function Fabricacion() {
   if (loading) return <div className={styles.loading}>Cargando...</div>
 
   const jornadaAbierta = jornada?.estado === 'abierta'
-  const jornadaCerrada = jornada?.estado === 'cerrada'
+  const jornadaCerrada = false // ahora jornada solo tiene valor cuando está abierta
 
   return (
     <div className={styles.wrap}>
@@ -245,20 +246,18 @@ export default function Fabricacion() {
           </div>
           <div>
             <div className={styles.estadoTitulo}>
-              {jornadaAbierta ? 'Tienda abierta' : jornadaCerrada ? 'Tienda cerrada' : 'Tienda sin abrir hoy'}
+              {jornadaAbierta ? 'Tienda abierta' : 'Tienda cerrada'}
             </div>
             <div className={styles.estadoSub}>
               {jornadaAbierta
-                ? `Abierta a las ${fmtHora(jornada.abierta_at)} · ${jornada.masas_total} masas producidas hoy`
-                : jornadaCerrada
-                  ? `Cerrada a las ${fmtHora(jornada.cerrada_at)} · ${jornada.masas_total} masas totales`
-                  : new Date().toLocaleDateString('es-AR', { weekday:'long', day:'2-digit', month:'long' })
+                ? `Abierta a las ${fmtHora(jornada.abierta_at)} · ${jornada.masas_total} masas producidas`
+                : new Date().toLocaleDateString('es-AR', { weekday:'long', day:'2-digit', month:'long' })
               }
             </div>
           </div>
         </div>
         <div className={styles.estadoBtns}>
-          {!jornada && (
+          {!jornadaAbierta && (
             <button className="btn btn-primary" onClick={() => { setError(''); setMasasAbrir(''); setModal('abrir') }}>
               <Icon d={ICONS.open} size={14} /> Abrir tienda
             </button>
