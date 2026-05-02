@@ -204,10 +204,10 @@ export default function Insumos() {
           </div>
           <div className={styles.metricLabel}>Agotados</div>
         </div>
-        <div className={styles.metric}>
+        {/* <div className={styles.metric}>
           <div className={styles.metricVal}>{insumos.filter(i => i.porcionreceta).length}</div>
           <div className={styles.metricLabel}>Con porción de receta</div>
-        </div>
+        </div> */}
       </div>
 
       {/* Header */}
@@ -239,7 +239,7 @@ export default function Insumos() {
                 <span>Tipo</span>
                 <span>Stock actual</span>
                 <span>Nivel</span>
-                <span>Porción receta</span>
+                {/* <span>Porción receta</span> */}
                 <span>Alerta</span>
                 <span></span>
               </div>
@@ -263,9 +263,9 @@ export default function Insumos() {
                   <div className={styles.barWrap}>
                     <div className={styles.bar} style={{ width: `${nivelPct(ins)}%`, background: nivelColor(ins) }} />
                   </div>
-                  <span className={styles.porcion}>
+                  {/* <span className={styles.porcion}>
                     {ins.porcionreceta ? `${ins.porcionreceta} ${ins.unidad || ''}` : '—'}
-                  </span>
+                  </span> */}
                   <span className={styles.alerta}>
                     {ins.alerta ? `≤ ${ins.alerta} ${ins.unidad || ''}` : '—'}
                   </span>
