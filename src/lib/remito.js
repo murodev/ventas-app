@@ -135,12 +135,10 @@ export async function generarRemito(venta, detalle, pagos) {
 
   <div class="info-block">
     <p><strong>Nombre:</strong> ${venta.clientes?.nombre || '—'}</p>
-    ${venta.clientes?.alias ? `<p><strong>Alias:</strong> ${venta.clientes.alias}</p>` : ''}
+    <p><strong>Emprendimiento:</strong> ${venta.clientes?.alias || '—'}</p>
     ${venta.clientes?.direccion ? `<p><strong>Dirección:</strong> ${venta.clientes.direccion}</p>` : ''}
-    ${venta.clientes?.telefono ? `<p><strong>Teléfono:</strong> ${venta.clientes.telefono}</p>` : ''}
     <p><strong>Fecha:</strong> ${fmtFecha(venta.fecha)}</p>
     <p><strong>Entregado:</strong> ${venta.entregado ? 'SÍ' : 'NO'}</p>
-    <p><strong>Estado:</strong> ${venta.estado}</p>
   </div>
 
   <table>
